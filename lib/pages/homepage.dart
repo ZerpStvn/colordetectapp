@@ -48,6 +48,18 @@ class _HomepageState extends State<Homepage> {
     }
   }
 
+  Future<void> _pickcamera() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+        _isLoading = true;
+      });
+      await _uploadImage(_image!);
+    }
+  }
+
   Future<void> _uploadImage(File imageFile) async {
     final uri = Uri.parse('https://colorflask.onrender.com/upload');
     final request = http.MultipartRequest('POST', uri);
@@ -77,11 +89,22 @@ class _HomepageState extends State<Homepage> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-            backgroundColor: maincolor,
-            title: const Text(
-              'Color Detection',
-              style: TextStyle(color: Colors.white),
-            )),
+          backgroundColor: maincolor,
+          title: const Text(
+            'Color Detection',
+            style: TextStyle(color: Colors.white),
+          ),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  modalshow();
+                },
+                icon: const Icon(
+                  Icons.camera_outlined,
+                  color: Colors.white,
+                ))
+          ],
+        ),
         body: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -180,5 +203,38 @@ class _HomepageState extends State<Homepage> {
         ),
       ),
     );
+  }
+
+  void modalshow() {
+    showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return SizedBox(
+            height: 200,
+            child: Padding(
+              padding: const EdgeInsets.all(18.0),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.camera_outlined),
+                    onTap: () {
+                      _pickImage();
+                      Navigator.pop(context);
+                    },
+                    title: const Text("Take a Photo"),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.video_chat_outlined),
+                    onTap: () {
+                      _pickImage();
+                      Navigator.pop(context);
+                    },
+                    title: const Text("Real Time Color Detection"),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
   }
 }
