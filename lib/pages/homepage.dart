@@ -1,9 +1,12 @@
+import 'package:colordetect/pages/camera.dart';
 import 'package:colordetect/pages/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
+
+import 'package:permission_handler/permission_handler.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -13,38 +16,60 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
+  bool permissionsGranted = false;
   File? _image;
   Map<String, double> _detectedColors = {};
-  bool _isLoading = false; // Variable to track the loading state
+  bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
-
-  // Mapping color names to Flutter color codes
   final Map<String, Color> colorMap = {
     "red": Colors.red,
-    "dark red": const Color(0xFF8B0000), // Dark Red
+    "dark red": const Color(0xFF8B0000),
     "green": Colors.green,
     "blue": Colors.blue,
     "yellow": Colors.yellow,
     "cyan": Colors.cyan,
-    "magenta": Colors.purple, // Close to magenta
+    "magenta": Colors.purple,
     "purple": Colors.purple,
     "orange": Colors.orange,
     "pink": Colors.pink,
-    "brown": const Color(0xFF8B4513), // Brown
+    "brown": const Color(0xFF8B4513),
     "gray": Colors.grey,
     "black": Colors.black,
     "white": Colors.white,
   };
 
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+  Future<void> _requestPermissions() async {
+    PermissionStatus cameraStatus = await Permission.camera.request();
+    PermissionStatus storageStatus = await Permission.storage.request();
 
-    if (pickedFile != null) {
+    if (cameraStatus.isGranted && storageStatus.isGranted) {
       setState(() {
-        _image = File(pickedFile.path);
-        _isLoading = true;
+        permissionsGranted = true;
       });
-      await _uploadImage(_image!);
+    } else if (cameraStatus.isPermanentlyDenied ||
+        storageStatus.isPermanentlyDenied) {
+      openAppSettings();
+    } else {
+      debugPrint("Permissions not granted.");
+    }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      if (permissionsGranted == true) {
+        final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+        if (pickedFile != null) {
+          setState(() {
+            _image = File(pickedFile.path);
+            _isLoading = true;
+          });
+          await _uploadImage(_image!);
+        }
+      } else {
+        _requestPermissions();
+      }
+    } catch (error) {
+      debugPrint("$error");
     }
   }
 
@@ -82,6 +107,12 @@ class _HomepageState extends State<Homepage> {
       });
       debugPrint('Error: ${responseBody.statusCode}');
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _requestPermissions();
   }
 
   @override
@@ -210,28 +241,43 @@ class _HomepageState extends State<Homepage> {
         context: context,
         builder: (context) {
           return SizedBox(
-            height: 200,
+            height: 230,
             child: Padding(
               padding: const EdgeInsets.all(18.0),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.camera_outlined),
-                    onTap: () {
-                      _pickImage();
-                      Navigator.pop(context);
-                    },
-                    title: const Text("Take a Photo"),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.video_chat_outlined),
-                    onTap: () {
-                      _pickImage();
-                      Navigator.pop(context);
-                    },
-                    title: const Text("Real Time Color Detection"),
-                  ),
-                ],
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.camera_outlined),
+                      onTap: () {
+                        _pickcamera();
+                        Navigator.pop(context);
+                      },
+                      title: const Text("Take a Photo"),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.video_chat_outlined),
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const CameraDetectionPage()));
+                      },
+                      title: const Text("Real Time Color Detection"),
+                    ),
+                    _image != null
+                        ? ListTile(
+                            leading: const Icon(Icons.image_outlined),
+                            onTap: () {
+                              _pickImage();
+                              Navigator.pop(context);
+                            },
+                            title: const Text("Select Another Image"),
+                          )
+                        : Container(),
+                  ],
+                ),
               ),
             ),
           );
