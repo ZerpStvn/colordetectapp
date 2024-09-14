@@ -56,7 +56,7 @@ class _HomepageState extends State<Homepage> {
 
   Future<void> _pickImage() async {
     try {
-      if (permissionsGranted == true) {
+      if (permissionsGranted != true) {
         final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
         if (pickedFile != null) {
           setState(() {
