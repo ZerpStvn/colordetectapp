@@ -1,4 +1,5 @@
 import 'package:colordetect/pages/homepage.dart';
+import 'package:colordetect/pages/onboarding.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff16423c)),
         useMaterial3: true,
       ),
-      home: const Homepage(),
+      home: const Onboarding(),
     );
   }
 }
