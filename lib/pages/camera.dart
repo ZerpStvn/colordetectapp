@@ -51,7 +51,7 @@ class _CameraDetectionPageState extends State<CameraDetectionPage> {
     final int width = image.width;
     final int height = image.height;
 
-    const int boxSize = 100;
+    final int boxSize = (min(width, height) * 0.2).toInt();
     final int centerX = width ~/ 2;
     final int centerY = height ~/ 2;
     final int startX = centerX - (boxSize ~/ 2);
@@ -73,9 +73,9 @@ class _CameraDetectionPageState extends State<CameraDetectionPage> {
           final int yIndex = image.planes[0].bytesPerRow * y + x;
           final int yValue = image.planes[0].bytes[yIndex];
 
-          int r = (yValue + (1.370705 * v)).round();
-          int g = (yValue - (0.337633 * u) - (0.698001 * v)).round();
-          int b = (yValue + (1.732446 * u)).round();
+          int r = (yValue + 1.402 * v).round();
+          int g = (yValue - 0.344136 * u - 0.714136 * v).round();
+          int b = (yValue + 1.772 * u).round();
 
           r = r.clamp(0, 255);
           g = g.clamp(0, 255);
@@ -89,21 +89,22 @@ class _CameraDetectionPageState extends State<CameraDetectionPage> {
       }
     }
 
-    int avgR = (totalR ~/ count).clamp(0, 255);
-    int avgG = (totalG ~/ count).clamp(0, 255);
-    int avgB = (totalB ~/ count).clamp(0, 255);
+    if (count > 0) {
+      int avgR = (totalR ~/ count).clamp(0, 255);
+      int avgG = (totalG ~/ count).clamp(0, 255);
+      int avgB = (totalB ~/ count).clamp(0, 255);
 
-    setState(() {
-      detectedColor = Color.fromARGB(255, avgR, avgG, avgB);
-      hexColor =
-          '#${detectedColor.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
-      rgbColor =
-          'RGB(${detectedColor.red}, ${detectedColor.green}, ${detectedColor.blue})';
-      colorName = getColorNameFromRGB(avgR, avgG, avgB);
-    });
+      setState(() {
+        detectedColor = Color.fromARGB(255, avgR, avgG, avgB);
+        hexColor =
+            '#${detectedColor.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+        rgbColor =
+            'RGB(${detectedColor.red}, ${detectedColor.green}, ${detectedColor.blue})';
+        colorName = getColorNameFromRGB(avgR, avgG, avgB);
+      });
+    }
   }
 
-  // Helper function to map RGB to a human-readable color name
   String getColorNameFromRGB(int r, int g, int b) {
     Map<String, List<int>> colorMap = {
       "black": [0, 0, 0],
@@ -119,6 +120,19 @@ class _CameraDetectionPageState extends State<CameraDetectionPage> {
       "purple": [128, 0, 128],
       "pink": [255, 192, 203],
       "brown": [165, 42, 42],
+      "light blue": [173, 216, 230],
+      "dark green": [0, 100, 0],
+      "dark blue": [0, 0, 139],
+      "light green": [144, 238, 144],
+      "teal": [0, 128, 128],
+      "lime": [0, 255, 0],
+      "navy": [0, 0, 128],
+      "gold": [255, 215, 0],
+      "coral": [255, 127, 80],
+      "khaki": [240, 230, 140],
+      "lavender": [230, 230, 250],
+      "salmon": [250, 128, 114],
+      "turquoise": [64, 224, 208],
     };
 
     String closestColor = "";
