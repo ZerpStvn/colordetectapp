@@ -1,11 +1,13 @@
+import 'package:colordetect/model/colorblindness.dart';
+import 'package:colordetect/model/colorharmony.dart';
 import 'package:colordetect/pages/camera.dart';
 import 'package:colordetect/pages/theme.dart';
+import 'package:colordetect/utils/functions.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:permission_handler/permission_handler.dart';
 
 class Homepage extends StatefulWidget {
@@ -21,21 +23,37 @@ class _HomepageState extends State<Homepage> {
   Map<String, double> _detectedColors = {};
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
+
   final Map<String, Color> colorMap = {
     "red": Colors.red,
     "dark red": const Color(0xFF8B0000),
+    "light red": const Color(0xFFFFA07A),
     "green": Colors.green,
+    "dark green": const Color(0xFF006400),
+    "light green": const Color(0xFF90EE90),
     "blue": Colors.blue,
+    "dark blue": const Color(0xFF00008B),
+    "light blue": const Color(0xFFADD8E6),
     "yellow": Colors.yellow,
+    "dark yellow": const Color(0xFFDAA520),
+    "light yellow": const Color(0xFFFFFFE0),
     "cyan": Colors.cyan,
+    "dark cyan": const Color(0xFF008B8B),
     "magenta": Colors.purple,
     "purple": Colors.purple,
+    "dark purple": const Color(0xFF4B0082),
+    "light purple": const Color(0xFFE6E6FA),
     "orange": Colors.orange,
+    "light orange": const Color(0xFFFFDAB9),
     "pink": Colors.pink,
     "brown": const Color(0xFF8B4513),
     "gray": Colors.grey,
+    "dark gray": const Color(0xFF505050),
+    "light gray": const Color(0xFFD3D3D3),
     "black": Colors.black,
     "white": Colors.white,
+    "beige": const Color(0xFFF5F5DC),
+    "peach": const Color(0xFFFFE5B4),
   };
 
   Future<void> _requestPermissions() async {
@@ -56,7 +74,7 @@ class _HomepageState extends State<Homepage> {
 
   Future<void> _pickImage() async {
     try {
-      if (permissionsGranted != true) {
+      if (permissionsGranted) {
         final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
         if (pickedFile != null) {
           setState(() {
@@ -86,15 +104,15 @@ class _HomepageState extends State<Homepage> {
   }
 
   Future<void> _uploadImage(File imageFile) async {
-    final uri = Uri.parse('https://colorflask.onrender.com/upload');
-    final request = http.MultipartRequest('POST', uri);
+    final uri = Uri.parse('http://10.0.2.2:5000/upload');
 
+    final request = http.MultipartRequest('POST', uri);
     request.files
         .add(await http.MultipartFile.fromPath('image', imageFile.path));
 
     final response = await request.send();
-
     final responseBody = await http.Response.fromStream(response);
+
     if (response.statusCode == 200) {
       final data = json.decode(responseBody.body);
       setState(() {
@@ -109,10 +127,60 @@ class _HomepageState extends State<Homepage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _requestPermissions();
+  // Function to display color harmonies in a modal
+  void _showColorHarmoniesModal(Color color) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(18.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Color Harmonies',
+                    style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 10),
+                _buildHarmonyRow(
+                    'Complementary', ColorHarmony.getComplementary(color)),
+                _buildHarmonyRow('Analogous', ColorHarmony.getAnalogous(color)),
+                _buildHarmonyRow('Triadic', ColorHarmony.getTriadic(color)),
+                _buildHarmonyRow(
+                    'Monochromatic', ColorHarmony.getMonochromatic(color)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHarmonyRow(String title, List<Color> colors) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          Row(
+            children: colors.map((color) {
+              return Container(
+                width: 50,
+                height: 50,
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: color,
+                  border: Border.all(width: 1, color: Colors.black),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -127,13 +195,14 @@ class _HomepageState extends State<Homepage> {
           ),
           actions: [
             IconButton(
-                onPressed: () {
-                  modalshow();
-                },
-                icon: const Icon(
-                  Icons.camera_outlined,
-                  color: Colors.white,
-                ))
+              onPressed: () {
+                modalshow();
+              },
+              icon: const Icon(
+                Icons.camera_outlined,
+                color: Colors.white,
+              ),
+            ),
           ],
         ),
         body: SingleChildScrollView(
@@ -163,62 +232,101 @@ class _HomepageState extends State<Homepage> {
                         ),
                       ),
                     ),
-
               _isLoading
                   ? const LinearProgressIndicator(
                       color: secondarycolor,
                     )
                   : Container(),
-              // _isLoading
-              //     ? const CircularProgressIndicator()
-              //     : ElevatedButton(
-              //         onPressed: _isLoading
-              //             ? null
-              //             : _pickImage, // Disable button while loading
-              //         child: const Text('Select Image'),
-              //       ),
-
-              const SizedBox(height: 20),
+              SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _detectedColors.isNotEmpty && !_isLoading
+                        ? Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: maincolor,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(4))),
+                                onPressed: () {
+                                  _showColorBlindnessModal();
+                                },
+                                child: Text(
+                                  "Color Blind Simulation",
+                                  style: TextStyle(color: Colors.white),
+                                )),
+                          )
+                        : Container(),
+                  ],
+                ),
+              ),
               _detectedColors.isNotEmpty && !_isLoading
                   ? Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(11.0),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Color Detected",
+                              style:
+                                  TextStyle(color: Colors.black, fontSize: 20),
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+                        ),
+                      ),
+                    )
+                  : Container(),
+              _detectedColors.isNotEmpty && !_isLoading
+                  ? Padding(
+                      padding: const EdgeInsets.all(0.0),
                       child: GridView.builder(
-                        shrinkWrap:
-                            true, // Allows GridView to take only the needed space
-                        physics:
-                            const NeverScrollableScrollPhysics(), // Prevents GridView from scrolling independently
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
+                          crossAxisCount: 4,
                           crossAxisSpacing: 10.0,
                           mainAxisSpacing: 10.0,
-                          childAspectRatio: 4,
+                          childAspectRatio: 1,
                         ),
                         itemCount: _detectedColors.length,
                         itemBuilder: (context, index) {
                           final colorEntry =
                               _detectedColors.entries.elementAt(index);
                           final colorName = colorEntry.key;
-                          final colorPercentage = colorEntry.value;
                           final displayColor =
                               colorMap[colorName] ?? Colors.black;
 
-                          return Container(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Row(
+                          return GestureDetector(
+                            onLongPress: () {
+                              _showColorHarmoniesModal(displayColor);
+                            },
+                            onTap: () {
+                              openColorInspirationSearch(colorName);
+                            },
+                            child: Column(
                               children: [
                                 Container(
-                                  width: 30,
-                                  height: 30,
+                                  width: 50,
+                                  height: 50,
                                   decoration: BoxDecoration(
-                                      color: displayColor,
-                                      border: Border.all(
-                                          width: 1, color: Colors.black)),
+                                    color: displayColor,
+                                    border: Border.all(
+                                        width: 1, color: Colors.black),
+                                  ),
                                 ),
-                                const SizedBox(width: 10),
+                                const SizedBox(height: 5),
                                 Text(
-                                  '$colorName: ${colorPercentage.toStringAsFixed(2)}%',
-                                  style: const TextStyle(fontSize: 18),
+                                  colorName[0].toUpperCase() +
+                                      colorName.substring(1),
+                                  style: const TextStyle(fontSize: 14),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
@@ -238,49 +346,128 @@ class _HomepageState extends State<Homepage> {
 
   void modalshow() {
     showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          return SizedBox(
-            height: 230,
-            child: Padding(
-              padding: const EdgeInsets.all(18.0),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.camera_outlined),
-                      onTap: () {
-                        _pickcamera();
-                        Navigator.pop(context);
-                      },
-                      title: const Text("Take a Photo"),
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.video_chat_outlined),
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const CameraDetectionPage()));
-                      },
-                      title: const Text("Real Time Color Detection"),
-                    ),
-                    _image != null
-                        ? ListTile(
-                            leading: const Icon(Icons.image_outlined),
-                            onTap: () {
-                              _pickImage();
-                              Navigator.pop(context);
-                            },
-                            title: const Text("Select Another Image"),
-                          )
-                        : Container(),
-                  ],
-                ),
+      context: context,
+      builder: (context) {
+        return SizedBox(
+          height: 230,
+          child: Padding(
+            padding: const EdgeInsets.all(18.0),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.camera_outlined),
+                    onTap: () {
+                      _pickcamera();
+                      Navigator.pop(context);
+                    },
+                    title: const Text("Take a Photo"),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.video_chat_outlined),
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const CameraDetectionPage()));
+                    },
+                    title: const Text("Real Time Color Detection"),
+                  ),
+                  _image != null
+                      ? ListTile(
+                          leading: const Icon(Icons.image_outlined),
+                          onTap: () {
+                            _pickImage();
+                            Navigator.pop(context);
+                          },
+                          title: const Text("Select Another Image"),
+                        )
+                      : Container(),
+                ],
               ),
             ),
-          );
-        });
+          ),
+        );
+      },
+    );
+  }
+
+  void _showColorBlindnessModal() {
+    showModalBottomSheet(
+      shape: RoundedRectangleBorder(),
+      context: context,
+      builder: (context) {
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 20,
+              ),
+              const Text(
+                'Color Blindness Simulations',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              _buildColorBlindnessSimulationRow("Protanopia", applyProtanopia),
+              _buildColorBlindnessSimulationRow(
+                  "Deuteranopia", applyDeuteranopia),
+              _buildColorBlindnessSimulationRow("Tritanopia", applyTritanopia),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildColorBlindnessSimulationRow(
+      String type, Color Function(Color) simulator) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(11.0),
+            child: Text(type,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: MediaQuery.of(context).size.width,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                children: _detectedColors.keys.map((colorName) {
+                  final originalColor = colorMap[colorName] ?? Colors.black;
+                  final simulatedColor = simulator(originalColor);
+                  return Padding(
+                    padding: const EdgeInsets.all(11.0),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          margin: const EdgeInsets.only(right: 8),
+                          color: simulatedColor,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          colorName,
+                          style: const TextStyle(fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
