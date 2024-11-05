@@ -104,8 +104,8 @@ class _HomepageState extends State<Homepage> {
   }
 
   Future<void> _uploadImage(File imageFile) async {
-    final uri = Uri.parse('http://10.0.2.2:5000/upload');
-
+    // final uri = Uri.parse('http://10.0.2.2:5000/upload');
+    final uri = Uri.parse('https://colorflask.onrender.com/upload');
     final request = http.MultipartRequest('POST', uri);
     request.files
         .add(await http.MultipartFile.fromPath('image', imageFile.path));
