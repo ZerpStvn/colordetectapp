@@ -51,8 +51,8 @@ class _CameraDetectionPageState extends State<CameraDetectionPage> {
     final int width = image.width;
     final int height = image.height;
 
-    final int boxSize = (min(width, height) * 0.05)
-        .toInt(); // Smaller box size for more accuracy
+    final int boxSize = (min(width, height) * 0.08)
+        .toInt(); // Slightly larger box for more accurate distant colors
     final int centerX = width ~/ 2;
     final int centerY = height ~/ 2;
     final int startX = centerX - (boxSize ~/ 2);
@@ -178,7 +178,13 @@ class _CameraDetectionPageState extends State<CameraDetectionPage> {
       "light gray": [211, 211, 211],
       "dark gray": [169, 169, 169],
       "turquoise": [64, 224, 208],
-      "navy": [0, 0, 128]
+      "navy": [0, 0, 128],
+      "sand": [194, 178, 128],
+      "periwinkle": [204, 204, 255],
+      "lime green": [50, 205, 50],
+      "mint": [189, 252, 201],
+      "charcoal": [54, 69, 79],
+      "ivory": [255, 255, 240]
     };
 
     final targetLab = rgbToLab(r, g, b);
@@ -197,20 +203,7 @@ class _CameraDetectionPageState extends State<CameraDetectionPage> {
       }
     });
 
-    // Check saturation and red level to distinguish brown from gray
-    double saturation = calculateSaturation(r, g, b);
-    if (closestColor == "gray" && saturation > 0.1 && r > g && r > b) {
-      closestColor = "brown"; // Adjust based on your testing
-    }
-
     return closestColor;
-  }
-
-// Function to calculate saturation of the color
-  double calculateSaturation(int r, int g, int b) {
-    double max = [r, g, b].reduce((a, b) => a > b ? a : b) / 255.0;
-    double min = [r, g, b].reduce((a, b) => a < b ? a : b) / 255.0;
-    return (max - min) / max;
   }
 
   @override
@@ -247,8 +240,8 @@ class _CameraDetectionPageState extends State<CameraDetectionPage> {
           ),
           Center(
             child: Container(
-              width: 25, // Adjusted to match the smaller box size in detection
-              height: 25, // Adjusted to match the smaller box size in detection
+              width: 40, // Slightly increased for more consistent detection
+              height: 40, // Adjusted to match detection box size
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.red, width: 2),
               ),
