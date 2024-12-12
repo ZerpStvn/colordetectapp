@@ -174,7 +174,7 @@ class _CameraDetectionPageState extends State<CameraDetectionPage> {
       "khaki": [240, 230, 140],
       "beige": [245, 245, 220],
       "olive": [128, 128, 0],
-      "gray": [128, 128, 128],
+      "Brown": [128, 128, 128],
       "light gray": [211, 211, 211],
       "dark gray": [169, 169, 169],
       "turquoise": [64, 224, 208],

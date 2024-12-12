@@ -100,8 +100,8 @@ class _HomepageState extends State<Homepage> {
   }
 
   Future<void> _uploadImage(File imageFile) async {
-    final uri = Uri.parse('http://10.0.2.2:5000/upload');
-    // final uri = Uri.parse('https://colorflask.onrender.com/upload');
+    // final uri = Uri.parse('http://10.0.2.2:5000/upload');
+    final uri = Uri.parse('https://colorflask.onrender.com/upload');
     final request = http.MultipartRequest('POST', uri);
     request.files
         .add(await http.MultipartFile.fromPath('image', imageFile.path));
@@ -233,32 +233,32 @@ class _HomepageState extends State<Homepage> {
                       color: secondarycolor,
                     )
                   : Container(),
-              SizedBox(
-                width: MediaQuery.of(context).size.width,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    _detectedColors.isNotEmpty && !_isLoading
-                        ? Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                    backgroundColor: maincolor,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(4))),
-                                onPressed: () {
-                                  _showColorBlindnessModal();
-                                },
-                                child: Text(
-                                  "Color Blind Simulation",
-                                  style: TextStyle(color: Colors.white),
-                                )),
-                          )
-                        : Container(),
-                  ],
-                ),
-              ),
+              // SizedBox(
+              //   width: MediaQuery.of(context).size.width,
+              //   child: Column(
+              //     crossAxisAlignment: CrossAxisAlignment.end,
+              //     children: [
+              //       _detectedColors.isNotEmpty && !_isLoading
+              //           ? Padding(
+              //               padding: const EdgeInsets.all(8.0),
+              //               child: ElevatedButton(
+              //                   style: ElevatedButton.styleFrom(
+              //                       backgroundColor: maincolor,
+              //                       shape: RoundedRectangleBorder(
+              //                           borderRadius:
+              //                               BorderRadius.circular(4))),
+              //                   onPressed: () {
+              //                     _showColorBlindnessModal();
+              //                   },
+              //                   child: Text(
+              //                     "Color Blind Simulation",
+              //                     style: TextStyle(color: Colors.white),
+              //                   )),
+              //             )
+              //           : Container(),
+              //     ],
+              //   ),
+              // ),
               _detectedColors.isNotEmpty && !_isLoading
                   ? Padding(
                       padding: const EdgeInsets.all(11.0),
@@ -340,6 +340,37 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  void showAlertInfo() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Warning"),
+          content: Text(
+              "The color detection results may not be accurate. This is because the accuracy of detection depends on various factors, such as lighting conditions, camera quality, and the presence of reflective surfaces or obstructions in the environment."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const CameraDetectionPage()));
+                debugPrint("hello");
+              },
+              child: Text("okay"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void modalshow() {
     showModalBottomSheet(
       context: context,
@@ -362,11 +393,7 @@ class _HomepageState extends State<Homepage> {
                   ListTile(
                     leading: const Icon(Icons.video_chat_outlined),
                     onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const CameraDetectionPage()));
+                      showAlertInfo();
                     },
                     title: const Text("Real Time Color Detection"),
                   ),
